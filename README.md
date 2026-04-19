@@ -46,7 +46,7 @@ To run this project locally, follow these steps:
 
 4.  **Launch the Project:**
     ```bash
-    npm run dev
+    npm start
     ```
     *(This command will start the Vite development server. Open the link provided in your terminal to view the project).*
 ---
