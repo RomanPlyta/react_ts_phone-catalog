@@ -74,10 +74,10 @@ export const ProductDetailsPage: React.FC = () => {
   }, [productId]);
 
   useEffect(() => {
-    if (product) {
-      window.scrollTo(0, 0);
-    }
-  }, [product]);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }, [productId]);
 
   const isAdded = product
     ? cart.some(item => item.id === product.itemId)

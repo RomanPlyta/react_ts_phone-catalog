@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './ProductsSlider.module.scss';
 import { Product } from '../../types/Product';
 import { ProductCard } from '../ProductCard';
@@ -10,13 +10,31 @@ interface Props {
 export const ProductsSlider: React.FC<Props> = ({ sortBy }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(4);
 
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  const itemsPerPage = 4;
+  const sliderRef = useRef<HTMLDivElement>(null);
   const itemWidth = 288;
+
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      if (sliderRef.current) {
+        const containerWidth = sliderRef.current.clientWidth;
+        const calculatedItems =
+          Math.floor((containerWidth + 16) / itemWidth) || 1;
+
+        setItemsPerPage(calculatedItems);
+      }
+    };
+
+    updateItemsPerPage();
+    window.addEventListener('resize', updateItemsPerPage);
+
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
 
   useEffect(() => {
     fetch('./api/products.json')
@@ -40,6 +58,13 @@ export const ProductsSlider: React.FC<Props> = ({ sortBy }) => {
   }, [sortBy]);
 
   const maxIndex = Math.max(0, products.length - itemsPerPage);
+
+  useEffect(() => {
+    if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+    }
+  }, [maxIndex, currentIndex]);
+
   const isFirst = currentIndex === 0;
   const isLast = currentIndex >= maxIndex;
 
@@ -80,7 +105,6 @@ export const ProductsSlider: React.FC<Props> = ({ sortBy }) => {
     }
 
     const itemsSwiped = Math.round(-dragOffset / itemWidth);
-
     let newIndex = currentIndex + itemsSwiped;
 
     newIndex = Math.max(0, Math.min(newIndex, maxIndex));
@@ -91,9 +115,10 @@ export const ProductsSlider: React.FC<Props> = ({ sortBy }) => {
   };
 
   const currentTranslate = -(currentIndex * itemWidth) + dragOffset;
+  const visibleWindowWidth = itemsPerPage * itemWidth - 16;
 
   return (
-    <div className={styles.slider}>
+    <div className={styles.slider} ref={sliderRef}>
       <div className={styles.controls}>
         <button className={styles.arrowBtn} onClick={prev} disabled={isFirst}>
           {'<'}
@@ -108,6 +133,7 @@ export const ProductsSlider: React.FC<Props> = ({ sortBy }) => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        style={{ width: `${visibleWindowWidth}px` }}
       >
         <div
           className={styles.track}
